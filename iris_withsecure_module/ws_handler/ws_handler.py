@@ -274,7 +274,7 @@ class WSHandler:
                         payload.update({"asset_domain": f"{ws_json.get('activeDirectoryGroup') if ws_json.get('activeDirectoryGroup') else ''}"})
                     cap = re.search(r'^((?:\d{1,3}\.){3}\d{1,3})', ws_json.get('ipAddresses'))
                     if cap:
-                        payload.update({"asset_ip": f'{cap.group(1)}'})
+                        payload.update({"asset_ip": f"{cap.group(1) if cap.group(1) else ''}"})
                 req = requests.post(
                     url=IRIS_API_ASSET_CREATE_URL,
                     headers=headers,

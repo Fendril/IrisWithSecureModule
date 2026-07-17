@@ -40,10 +40,7 @@ class WSClient:
         to obtain the token for further queries
 
         Keep the token inside the class itself
-        Authentication query :
-        curl -v -X POST -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0" -d "grant_type=client_credentials" -d "scope=connect.api.read" -u "fusion_0360add8593c4182b047e551:qgmO7ei7yZrEhNFnmDTUml1ghXAZKZ9Z" https://api.connect.withsecure.com/as/token.oauth2
-        Response :
-        {"access_token":"lkSxsZHqAQUaOjmF1O4IrQxeT6ctSrobuGp5usREI4XVSjiGJxz2600vj888VwBvY0lIB7YyR2d9cH3jpQD8Xki6xFyV","expires_in":1862,"token_type":"Bearer"}        """
+        """
         datas = {
             'grant_type': 'client_credentials',
             'scope': 'connect.api.read'
@@ -111,13 +108,7 @@ class WSClient:
     
     def get_device(self, device_id: str):
         """
-        TODO : Fonction de récupération d'informations d'un Device à partir de l'ID
-        Withsecure ex : d67e2605-66b8-4c33-869d-589254062835
-        URL API : curl -v -X GET
-            -H "Authorization: Bearer zM5pMCdgt6qcH3KrxZiOVOutY7qSdfDwCCIaiTRAM0sHpbDQ3ECbwhZI1OeGrsCXgXuVI7LAvSdTYDLwetab982glOHf"
-            -H "Content-Type: application/json"
-            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0"
-            https://api.connect.withsecure.com/devices/v1/devices?deviceId=d67e2605-66b8-4c33-869d-589254062835
+            
         """
         WS_API_GET_DEVICE_URL = "https://api.connect.withsecure.com/devices/v1/devices"
         if re.match(r'^[a-z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12}$', device_id):

@@ -30,7 +30,7 @@ class IrisWithSecureModule(IrisModuleInterface):
         # the module_id to this method, otherwise IRIS won't know 
         # to whom associate the hook. 
         # The hook name needs to be a well known hook name by IRIS. 
-        status = self.register_to_hook(module_id, iris_hook_name='on_manual_trigger_case')
+        status = self.register_to_hook(module_id, iris_hook_name='on_manual_trigger_case', manual_hook_name='WithSecure: Get Assets/IoCs from BCD')
         if status.is_failure():
             # If we have a failure, log something out 
             self.log.error(status.get_message())
