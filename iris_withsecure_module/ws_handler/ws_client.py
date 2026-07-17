@@ -107,15 +107,6 @@ class WSClient:
                 self.log.error(f"Une autre erreur est survenue : {err}")
     
     def get_device(self, device_id: str):
-        """
-        TODO : Fonction de récupération d'informations d'un Device à partir de l'ID
-        Withsecure ex : d67e2605-66b8-4c33-869d-589254062835
-        URL API : curl -v -X GET
-            -H "Authorization: Bearer zM5pMCdgt6qcH3KrxZiOVOutY7qSdfDwCCIaiTRAM0sHpbDQ3ECbwhZI1OeGrsCXgXuVI7LAvSdTYDLwetab982glOHf"
-            -H "Content-Type: application/json"
-            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0"
-            https://api.connect.withsecure.com/devices/v1/devices?deviceId=d67e2605-66b8-4c33-869d-589254062835
-        """
         WS_API_GET_DEVICE_URL = "https://api.connect.withsecure.com/devices/v1/devices"
         if re.match(r'^[a-z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12}$', device_id):
             headers = {
