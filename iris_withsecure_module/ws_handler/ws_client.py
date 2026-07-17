@@ -40,10 +40,7 @@ class WSClient:
         to obtain the token for further queries
 
         Keep the token inside the class itself
-        Authentication query :
-        curl -v -X POST -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0" -d "grant_type=client_credentials" -d "scope=connect.api.read" -u "fusion_0360add8593c4182b047e551:qgmO7ei7yZrEhNFnmDTUml1ghXAZKZ9Z" https://api.connect.withsecure.com/as/token.oauth2
-        Response :
-        {"access_token":"lkSxsZHqAQUaOjmF1O4IrQxeT6ctSrobuGp5usREI4XVSjiGJxz2600vj888VwBvY0lIB7YyR2d9cH3jpQD8Xki6xFyV","expires_in":1862,"token_type":"Bearer"}        """
+        """
         datas = {
             'grant_type': 'client_credentials',
             'scope': 'connect.api.read'
