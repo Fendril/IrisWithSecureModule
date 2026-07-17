@@ -107,9 +107,6 @@ class WSClient:
                 self.log.error(f"Une autre erreur est survenue : {err}")
     
     def get_device(self, device_id: str):
-        """
-            
-        """
         WS_API_GET_DEVICE_URL = "https://api.connect.withsecure.com/devices/v1/devices"
         if re.match(r'^[a-z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12}$', device_id):
             headers = {

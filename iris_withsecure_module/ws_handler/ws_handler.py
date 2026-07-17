@@ -168,8 +168,8 @@ class WSHandler:
                     elif "exeName" in iocs:
                         if "exeHash" in iocs:
                             payload.update({
-                                "ioc_type_id": "44",
-                                "ioc_value": f"{iocs.get('exeName')}|{iocs.get('exeHash')}",
+                                "ioc_type_id": "111",
+                                "ioc_value": f"{iocs.get('exeHash')}",
                                 "ioc_description": f"{iocs.get('desc') if iocs.get('desc') else ''}"
                             })
                         else:
