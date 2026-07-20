@@ -228,7 +228,7 @@ class WSHandler:
                         if ws_json.get("type") == "computer":
                             os_name = ws_json.get("os").get("name")
                             if re.match(r'^Windows', os_name):
-                                if re.match(r'(?i)Server', os_name):
+                                if re.search(r'(?i)Server', os_name):
                                     asset_type_id = "10"
                                 else:
                                     asset_type_id = "9"
