@@ -89,7 +89,8 @@ class WSHandler:
                         tmp_dict = {
                             "exeName": item["exeName"],
                             "exeHash": item["exeHash"],
-                            "exePath": item["exePath"]
+                            "exePath": item["exePath"],
+                            "cmdl": item["cmdl"]
                         }
                         binary_iocs_set.add(tuple(tmp_dict.items()))
                     if "username" in item:
@@ -155,14 +156,14 @@ class WSHandler:
                     if "dstip" in iocs or "srcip" in iocs:
                         if "dstport" in iocs:
                             payload.update({
-                                "ioc_type_id": "78",
-                                "ioc_value": f"{iocs.get('dstip')}|{iocs.get('dstport')}",
+                                "ioc_type_id": "77",
+                                "ioc_value": f"{iocs.get('dstip')}",
                                 "ioc_description": f"{iocs.get('desc') if iocs.get('desc') else ''}"
                             })
                         if "srcport" in iocs:
                             payload.update({
-                                "ioc_type_id": "80",
-                                "ioc_value": f"{iocs.get('srcip')}|{iocs.get('srcport')}",
+                                "ioc_type_id": "79",
+                                "ioc_value": f"{iocs.get('srcip')}",
                                 "ioc_description": f"{iocs.get('desc') if iocs.get('desc') else ''}"
                             })
                     elif "exeName" in iocs:
@@ -170,19 +171,18 @@ class WSHandler:
                             payload.update({
                                 "ioc_type_id": "111",
                                 "ioc_value": f"{iocs.get('exeHash')}",
-                                "ioc_description": f"{iocs.get('desc') if iocs.get('desc') else ''}"
                             })
                         else:
                             payload.update({
                                 "ioc_type_id": "37",
                                 "ioc_value": f"{iocs.get('exeName')}",
-                                "ioc_description": f"{iocs.get('desc') if iocs.get('desc') else ''}"
                             })
+                        payload.update({"ioc_description": f"CommandLine : {iocs.get('desc') if iocs.get('desc') else ''}  \nPath : {iocs.get('exePath') if iocs.get('exePath') else ''}"})
                     elif "exePath" in iocs:
                         payload.update({
                             "ioc_type_id": "97",
                             "ioc_value": f"{iocs.get('exePath')}",
-                            "ioc_description": f"{iocs.get('desc') if iocs.get('desc') else ''}"
+                            "ioc_description": f"CommandLine : {iocs.get('desc') if iocs.get('desc') else ''}  \nPath : {iocs.get('exePath') if iocs.get('exePath') else ''}"
                         })
 
                 else:
