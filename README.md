@@ -43,7 +43,7 @@ When viewing a BCD within your WithSecure Elements portal, you will see an ID li
 Once the module is installed and configured, follow these steps within your DFIR-IRIS Case to trigger it:
 
 1. Go to your **Case Summary**, edit it, and insert your BCD ID anywhere inside the text using a format that matches the following regex:  
-   `(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12})`  
+   `(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})`  
     Those exemples are valid for the module :
    - WithSecureID:45xxxx99-exxa-4xx9-axx6-58xxxxxxxxe5
    - IDWS=45xxxx99-exxa-4xx9-axx6-58xxxxxxxxe5
@@ -52,7 +52,11 @@ Once the module is installed and configured, follow these steps within your DFIR
    - IdWiThSeCuRe : 45xxxx99-exxa-4xx9-axx6-58xxxxxxxxe5
 2. Click on the button dedicated to running manual Processors.
 3. In the dropdown menu, select:  
-   `iris_withsecure_module::on_manual_trigger_case`
+   `WithSecure: Get Assets/IoCs from BCD`
 4. After a few seconds, the Assets and IOCs extracted from the BCD ID will be populated directly into your Case.
+
+From v1.0.3 :
+   - IrisWithSecureModule is using the on_postload_trigger_case is use.
+   - If at case creation, into "Short Description" form a BCD ID is present, follow the requierd format, the module will add Assets and IoCs relying to.
 
 **Note** : Actually the Module is capturing and processing one, and only one WithSecure BCD ID.
