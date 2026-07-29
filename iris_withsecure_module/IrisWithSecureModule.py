@@ -37,6 +37,14 @@ class IrisWithSecureModule(IrisModuleInterface):
         else:
             # Log that we successfully registered to the hook 
             self.log.info(f"Successfully subscribed to on_manual_trigger_case hook")
+        
+        status = self.register_to_hook(module_id, iris_hook_name='on_postload_case_create', run_asynchronously=False)
+        if status.is_failure():
+            # If we have a failure, log something out 
+            self.log.error(status.get_message())
+        else:
+            # Log that we successfully registered to the hook 
+            self.log.info(f"Successfully subscribed to on_postload_case_create hook")
 
     def hooks_handler(self, hook_name: str, hook_ui_name:str, data:dict):
         """
@@ -45,8 +53,8 @@ class IrisWithSecureModule(IrisModuleInterface):
         # read the current configuration and only log the call if 
         # our parameter is set to true
         self.log.info(f'Received {hook_name}')
-        if hook_name == 'on_manual_trigger_case':
-            reg = re.compile(r"(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12})")
+        if hook_name in ['on_manual_trigger_case', 'on_postload_case_create']:
+            reg = re.compile(r"(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})")
             cap = reg.search(data[0].description)
             if cap:
                 status = self._handle_bcd(cap.group(1), data[0].case_id)

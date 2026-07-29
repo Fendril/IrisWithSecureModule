@@ -84,7 +84,7 @@ class WSClient:
         :rtype: json
         """
         WS_API_DETECTIONS_URL = "https://api.connect.withsecure.com/incidents/v1/detections"
-        if re.match(r'^[a-zA-Z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12}$', bcd_id):
+        if re.match(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$', bcd_id):
             headers = {
                 "Authorization": f"Bearer {self._ws_token}",
                 "Content-Type": "application/json",
@@ -108,7 +108,7 @@ class WSClient:
     
     def get_device(self, device_id: str):
         WS_API_GET_DEVICE_URL = "https://api.connect.withsecure.com/devices/v1/devices"
-        if re.match(r'^[a-z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12}$', device_id):
+        if re.match(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$', device_id):
             headers = {
                 "Authorization": f"Bearer {self._ws_token}",
                 "Content-Type": "application/json",
@@ -116,12 +116,8 @@ class WSClient:
             params = {
                 "deviceId": f"{device_id}"
             }
-            try:
-                req = requests.get(url=WS_API_GET_DEVICE_URL, headers=headers, params=params)
-                req.raise_for_status()
-                resp = req.json().get("items")[0]
-                return resp
-            except requests.exceptions.HTTPError as err:
-                self.log.error(f"Erreur HTTP survenue : {err}")
-            except Exception as err:
-                self.log.error(f"Une autre erreur est survenue : {err}")
+
+            req = requests.get(url=WS_API_GET_DEVICE_URL, headers=headers, params=params)
+            req.raise_for_status()
+            resp = req.json().get("items")[0]
+            return resp

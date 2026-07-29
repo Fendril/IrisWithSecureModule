@@ -84,7 +84,7 @@ class WSHandler:
         account_iocs_set = set()
         try:
             for item in json["items"]:
-                if item["severity"] in ["high", "critical"] or item["riskLevel"] in ["high", "critical"]:
+                if item["riskLevel"] in ["high", "critical", "medium"]:
                     if "exeName" in item and "exeHash" in item:
                         tmp_dict = {
                             "exeName": item["exeName"],
@@ -98,18 +98,26 @@ class WSHandler:
                             account_iocs_set.add(item["username"])
                             assets_set.add(item['username'])
                     if "activityContext" in item:
+                        tmp_dict = dict()
                         for activity_context in item["activityContext"]:
-                            tmp_dict = dict()
-                            if "destinationIp" in activity_context:
-                                tmp_dict.update({"dstip": activity_context["destinationIp"]})
-                            if "destinationPort" in activity_context:
-                                tmp_dict.update({"dstport": activity_context["destinationPort"]})
-                            if "sourceIp" in activity_context:
-                                tmp_dict.update({"srcip": activity_context["sourceIp"]})
-                            if "sourcePort" in activity_context:
-                                tmp_dict.update({"srcPort": activity_context["sourcePort"]})
-                            if tmp_dict:
-                                ips_iocs_set.add(tuple(tmp_dict.items()))
+                            if any(ip_ioc in activity_context for ip_ioc in ["destinationIp", "sourceIp"]):
+                                if "destinationIp" in activity_context:
+                                    tmp_dict.update({"dstip": activity_context["destinationIp"]})
+                                if "destinationPort" in activity_context:
+                                    tmp_dict.update({"dstport": activity_context["destinationPort"]})
+                                if "sourceIp" in activity_context:
+                                    tmp_dict.update({"srcip": activity_context["sourceIp"]})
+                                if "sourcePort" in activity_context:
+                                    tmp_dict.update({"srcPort": activity_context["sourcePort"]})
+                                if tmp_dict:
+                                    ips_iocs_set.add(tuple(tmp_dict.items()))
+                            elif "targetHash" in activity_context:
+                                tmp_dict.update({
+                                    "targetHash": activity_context["targetHash"],
+                                    "targetFile": activity_context["targetFile"],
+                                })
+                                binary_iocs_set.add(tuple(tmp_dict.items()))
+
                     if "description" in item:
                         tmp_dict.update({"desc": item.get('description')})
                 
@@ -184,6 +192,12 @@ class WSHandler:
                             "ioc_value": f"{iocs.get('exePath')}",
                             "ioc_description": f"CommandLine : {iocs.get('desc') if iocs.get('desc') else ''}  \nPath : {iocs.get('exePath') if iocs.get('exePath') else ''}"
                         })
+                    elif "targetHash" in iocs:
+                        payload.update({
+                            "ioc_type_id": "111",
+                            "ioc_value": f"{iocs.get('targetHash')}",
+                            "ioc_description": f"TargetFile : {iocs.get('targetFile') if iocs.get('targetFile') else ''}"
+                        })
 
                 else:
                     payload.update({
@@ -222,7 +236,7 @@ class WSHandler:
         }
         for asset in assets_set:
             try:
-                if re.match(r'^[a-zA-Z0-9]{8}(?:-[a-z0-9]{4}){3}-[a-z0-9]{12}$', asset):
+                if re.match(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$', asset):
                     ws_json = self.withsecure.get_device(asset)
                     if ws_json:
                         if ws_json.get("type") == "computer":
@@ -294,6 +308,30 @@ class WSHandler:
                     else:
                         self.log.error(f"Error HTTP 400 : {err_json}")
                         self.log.error(f"Asset was : {ws_json}")
+                        return IrisInterfaceStatus.I2Error(traceback.format_exc())
+                elif err.response.status_code == 404:
+                    err_json = err.response.json()
+                    if err_json.get("code") == 404000:
+                        self.log.error(f"Error HTTP 404 : WithSecure API didn't found deviceId {asset}.")
+                        payload = {
+                            "asset_type_id": "14",
+                            "asset_compromise_status": "0",
+                            "analysis_status_id": "2",
+                            "asset_name": f"{asset}",
+                            "asset_tags": "edr, withsecure, error",
+                            "asset_description": f"WithSecure API ERROR : {err_json.get('details').get('reason')}.\nAsset created by IrisWithSecureModule."
+                        }
+                        req = requests.post(
+                            url=IRIS_API_ASSET_CREATE_URL,
+                            headers=headers,
+                            json=payload,
+                            params=params,
+                            verify=False
+                        )
+                        req.raise_for_status()
+                        self.log.info(f"Sent POST Request to add Asset {payload.get('asset_name')} with status code : {req.status_code}")
+                    else:
+                        self.log.error(f"HTTP Error occured : {err}")
                         return IrisInterfaceStatus.I2Error(traceback.format_exc())
                 else:
                     self.log.error(f"HTTP Error occured : {err}")
