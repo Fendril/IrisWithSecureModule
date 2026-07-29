@@ -29,10 +29,8 @@ class WSClient:
     
     def __init__(self, api_secret: str, api_clientid: str, logger: log):
         self.log = logger
-        if re.match(r"^[a-zA-Z0-9]{32}$", api_secret.strip()):
-            self._withsecure_api_secret = api_secret
-        if re.match(r"^[a-zA-Z0-9]+_[a-zA-Z0-9]{24}$", api_clientid.strip()):
-            self._withsecure_api_clientid = api_clientid
+        self._withsecure_api_secret = api_secret
+        self._withsecure_api_clientid = api_clientid
         self._ws_token = None
 
     def authenticate(self):
@@ -121,3 +119,89 @@ class WSClient:
             req.raise_for_status()
             resp = req.json().get("items")[0]
             return resp
+
+    def dfir_collect_device(self, device_id: str):
+        self.log.info("[DEBUG] Entered WSClient::dfir_collect_device.")
+        if re.match(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$', device_id):
+            WS_API_BASE_URL = "api.connect.withsecure.com/response-actions/v1/execute/"
+            WS_COLLECT_WINDOWS = {
+                "fullMemoryDump" : {
+                    "winpmemersion" : "v2_1"
+                },
+                "enumerateProcesses": {},
+                "enumerateWmiPersistence": {},
+                "enumerateScheduledTasks": {},
+                "retrieveAmcache": {},
+                "retrieveBrowserArtefacts": {
+                    "chrome": "true",
+                    "edge": "true",
+                    "firefox": "true",
+                    "opera": "true",
+                },
+                "retrieveEventLogTracing": {},
+                "retrieveMbr": {
+                    "drive": "C:\\"
+                },
+                "retrieveMft": {
+                    "drive": "C:\\"
+                },
+                "netstat": {
+                    "maxFileSizeToHashMB": 100
+                },
+                "retrievePrefetch": {},
+                "retrieveRecentlyAccessed": {},
+            }
+            WS_COLLECT_LINUX = {
+                "fullMemoryDump" : {
+                    "captureMemory": "true",
+                    "collectProfile": "true"
+                },
+                "enumerateProcesses": {},
+                "netstat": {
+                    "maxFileSizeToHashMB": 100
+                }
+            }
+            try:
+                ws_actions_id = []
+                ws_json = self.get_device(device_id)
+                if ws_json.get("type") == "computer":
+                    headers = {
+                        "Authorization": f"Bearer {self._ws_token}",
+                        "Content-Type": "application/json",
+                    }
+                    payload = {
+                        "organizationId": f"{ws_json.get('company').get('id')}",
+                        "targets": [f"{device_id}"],
+                    }
+                    os_name = ws_json.get("os").get("name")
+                    if re.match(r'^Windows', os_name):
+                        for artifact, parameters in WS_COLLECT_WINDOWS.items():
+                            if parameters:
+                                payload.update({"parameters": parameters})
+                            response = requests.post(
+                                url = f"https://{WS_API_BASE_URL}{artifact}",
+                                headers = headers,
+                                json = payload
+                            )
+                            response.raise_for_status()
+                            ws_actions_id.append(response.json().get("id"))
+                    elif re.match(r'(?i)^(?:Debian|Ubuntu|Alma|Amazon|Oracle|RHEL|Red\s?Hat|Rocky|SUSE)', os_name):
+                        for artifact, parameters in WS_COLLECT_LINUX.items():
+                            if parameters:
+                                payload.update({"parameters": parameters})
+                            response = requests.post(
+                                url = f"https://{WS_API_BASE_URL}{artifact}",
+                                headers = headers,
+                                json = payload
+                            )
+                            response.raise_for_status()
+                            ws_actions_id.append(response.json().get("id"))
+                return ws_actions_id
+            except requests.exceptions.HTTPError as err:
+                self.log.error(f"HTTP Error occured : {err}")
+                raise
+            except Exception as err:
+                self.log.error(f"Error occured : {err}")
+                raise
+        else:
+            raise WSClientError("Asset infos does not contain a valid device ID. Must be a valid WS UUID.")

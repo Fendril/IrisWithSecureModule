@@ -5,7 +5,7 @@ from . import IrisWithSecureConfig as interface_conf
 import iris_interface.IrisInterfaceStatus as InterfaceStatus
 from iris_interface.IrisModuleInterface import IrisModuleInterface
 import re
-
+from app.models.models import CaseAssets as Asset
 from iris_withsecure_module.ws_handler.ws_handler import WSHandler
 
 # Create our module class
@@ -46,6 +46,14 @@ class IrisWithSecureModule(IrisModuleInterface):
             # Log that we successfully registered to the hook 
             self.log.info(f"Successfully subscribed to on_postload_case_create hook")
 
+        status = self.register_to_hook(module_id, iris_hook_name='on_manual_trigger_asset', manual_hook_name='WithSecure: DFIR Collects Asset')
+        if status.is_failure():
+            # If we have a failure, log something out 
+            self.log.error(status.get_message())
+        else:
+            # Log that we successfully registered to the hook 
+            self.log.info(f"Successfully subscribed to on_manual_trigger_asset hook")
+
     def hooks_handler(self, hook_name: str, hook_ui_name:str, data:dict):
         """
         Called by IRIS each time one of our hook is triggered. 
@@ -53,7 +61,7 @@ class IrisWithSecureModule(IrisModuleInterface):
         # read the current configuration and only log the call if 
         # our parameter is set to true
         self.log.info(f'Received {hook_name}')
-        if hook_name in ['on_manual_trigger_case', 'on_postload_case_create']:
+        if hook_name in {'on_manual_trigger_case', 'on_postload_case_create'}:
             reg = re.compile(r"(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})")
             cap = reg.search(data[0].description)
             if cap:
@@ -64,6 +72,12 @@ class IrisWithSecureModule(IrisModuleInterface):
             else:
                 self.log.error(f"Received right hook, but can't find any WithSecure BCD ID.")
                 return InterfaceStatus.I2Error(data=data, logs=list(self.message_queue))
+
+        elif hook_name == "on_manual_trigger_asset":
+            for asset in data:
+                self.log.info(f"[DEBUG] TYPE : {type(asset)} -> {asset}")
+                self.log.info(f"[DEBUG] TYPE : {type(asset.asset_info)} -> {asset.asset_info}")
+                status = self._handle_dfir_collect_asset(asset)
         
         # Return a standardized message to IRIS saying that everything is ok. 
         # logs=list(self.message_queue) is needed, so the users can see the logs 
@@ -80,12 +94,33 @@ class IrisWithSecureModule(IrisModuleInterface):
         """
         in_status = InterfaceStatus.IIStatus(code=InterfaceStatus.I2CodeNoError)
 
-        ws_handler = WSHandler(logger=self.log, case_id=case_id, mod_config=self._dict_conf)
+        ws_handler = WSHandler.from_case_id(logger=self.log, case_id=case_id, mod_config=self._dict_conf)
 
         status = ws_handler.load_withsecure_instance()
         in_status = InterfaceStatus.merge_status(in_status, status)
 
         status = ws_handler.get_detections(bcd_id)
+        in_status = InterfaceStatus.merge_status(in_status, status)
+
+        return in_status()
+
+    def _handle_dfir_collect_asset(self, asset: Asset):
+        """
+        Handle the DFIR asset data the module just received. The module registered
+        to on_manual_trigger_asset, so it receives a DFIR asset data dictionary.
+        
+        :param asset: DFIR asset data to gather.
+        :type asset: Asset
+        """
+        self.log.info("[DEBUG] Entered _handle_dfir_collect_asset.")
+        in_status = InterfaceStatus.IIStatus(code=InterfaceStatus.I2CodeNoError)
+
+        ws_handler = WSHandler.from_asset(logger=self.log, asset=asset, mod_config=self._dict_conf)
+
+        status = ws_handler.load_withsecure_instance()
+        in_status = InterfaceStatus.merge_status(in_status, status)
+
+        status = ws_handler.dfir_collect_asset(asset)
         in_status = InterfaceStatus.merge_status(in_status, status)
 
         return in_status()

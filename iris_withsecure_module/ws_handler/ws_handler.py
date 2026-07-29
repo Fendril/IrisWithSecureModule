@@ -5,13 +5,18 @@ import requests
 import re
 import urllib3
 
+from app.models.models import CaseAssets as Asset
 from iris_interface import IrisInterfaceStatus
 from iris_withsecure_module.ws_handler.ws_client import WSClient, WSClientError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+class WSHandlerError(Exception):
+    """Basic Error Class"""
+    pass
+
 class WSHandler:
-    def __init__(self, logger: log, case_id: int, mod_config = None):
+    def __init__(self, logger: log, asset= Asset, case_id = None, mod_config = None):
         self.mod_config = mod_config
         self.withsecure_api_secret = self.mod_config.get('withsecure_api_secret')
         self.withsecure_api_clientid = self.mod_config.get('withsecure_api_clientid')
@@ -20,6 +25,21 @@ class WSHandler:
         self.iris_fqdn = self.mod_config.get('iris_fqdn')
         self.log = logger
         self.iris_case_id = case_id
+        self.iris_asset = asset
+
+    @classmethod
+    def from_case_id(cls, logger: log, case_id: int, mod_config = None):
+        """
+        Class method to create an instance of WSHandler with a case ID.
+        """
+        return cls(logger=logger, case_id=case_id, mod_config=mod_config)
+
+    @classmethod
+    def from_asset(cls, logger: log, asset: Asset, mod_config = None):
+        """
+        Class method to create an instance of WSHandler with an Asset.
+        """
+        return cls(logger=logger, asset=asset, mod_config=mod_config)
 
     def load_withsecure_instance(self):
         """
@@ -58,9 +78,9 @@ class WSHandler:
     def get_detections(self, bcd_id: str):
         """
         Call WS API to gather all information over an Incident ID
+
         :param bcd_id: ID to Gather, need to be passed to an instanciated
         and authenticated WSClient.
-
         :rtype: InterfaceStatus.I2
         """
         try:
@@ -70,11 +90,47 @@ class WSHandler:
             return InterfaceStatus.I2Error(traceback.format_exc())
         
         return InterfaceStatus.I2Success()
+
+    def dfir_collect_asset(self, asset: Asset):
+        """
+        Call WS API to gather all information over an Asset ID
+        Then it launch the collection of artefacts through WS API on 
+        concerned EDR.
+
+        :param asset: Asset to Gather, need to be passed to an instanciated
+        and authenticated WSClient.
+        :rtype: InterfaceStatus.I2
+        """
+        self.log.info("[DEBUG] Entered WSHandler::dfir_collect_asset.")
+        self.log.info(f"[DEBUG] Asset: {asset}")
+        self.log.info(f"[DEBUG] Asset Info: {asset.asset_info}")
+        try:
+            if asset.asset_type_id in {3, 4, 9, 10}: 
+                ws_actions_id = self.withsecure.dfir_collect_device(asset.asset_info)
+                self.log.info(f"[DEBUG] WS Actions ID : {ws_actions_id}")
+                return InterfaceStatus.I2Success()
+            else:
+                raise WSHandlerError(f"The asset {asset.asset_name} is not compatible with this module. Only Windows or Linux Computer/Server, are supported.")
+        
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == 403:
+                self.log.error(f"HTTP 403 Error : {err.response.json().get('message')}")
+            else:
+                self.log.error(f"HTTP Error occured : {err}")
+            return InterfaceStatus.I2Error(err)
+        except WSHandlerError as err:
+            self.log.error(f"WSHandler Error occured : {err}")
+            return InterfaceStatus.I2Error(err)
+        except Exception as err:
+            self.log.error(f"Error occured : {err}")
+            return InterfaceStatus.I2Error(err)
+
     
     def _handle_ws_response(self, json):
         """
         Handles the JSON formated data, extract informations and
         add IoCs & assets directly to the case.
+
         :param json: Contains the JSON formated information from WS API
         response.
         """
@@ -84,7 +140,7 @@ class WSHandler:
         account_iocs_set = set()
         try:
             for item in json["items"]:
-                if item["riskLevel"] in ["high", "critical", "medium"]:
+                if item["riskLevel"] in {"high", "critical", "medium"}:
                     if "exeName" in item and "exeHash" in item:
                         tmp_dict = {
                             "exeName": item["exeName"],
@@ -100,7 +156,7 @@ class WSHandler:
                     if "activityContext" in item:
                         tmp_dict = dict()
                         for activity_context in item["activityContext"]:
-                            if any(ip_ioc in activity_context for ip_ioc in ["destinationIp", "sourceIp"]):
+                            if any(ip_ioc in activity_context for ip_ioc in {"destinationIp", "sourceIp"}):
                                 if "destinationIp" in activity_context:
                                     tmp_dict.update({"dstip": activity_context["destinationIp"]})
                                 if "destinationPort" in activity_context:
@@ -277,7 +333,7 @@ class WSHandler:
                 else:
                     payload = {
                         "asset_type_id": f"{asset_type_id}",
-                        "asset_info": f"Modèle : {ws_json.get('computerModel')}",
+                        "asset_info": f"{asset}",
                         "asset_compromise_status_id": "0",
                         "analysis_status_id": "2",
                         "asset_name": f"{ws_json.get('name')}",
@@ -318,6 +374,7 @@ class WSHandler:
                             "asset_compromise_status": "0",
                             "analysis_status_id": "2",
                             "asset_name": f"{asset}",
+                            "asset_info": f"{ws_json.get('deviceId')}",
                             "asset_tags": "edr, withsecure, error",
                             "asset_description": f"WithSecure API ERROR : {err_json.get('details').get('reason')}.\nAsset created by IrisWithSecureModule."
                         }

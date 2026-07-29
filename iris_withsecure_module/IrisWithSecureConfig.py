@@ -15,7 +15,7 @@ module_description = "Provides a WithSecure module that gather information from 
 interface_version = "1.2.0"
 
 # The version of the module itself, it can be anything 
-module_version = "1.0.2"
+module_version = "1.0.3"
 
 # The type of the module, here processor 
 module_type = IrisModuleTypes.module_processor
