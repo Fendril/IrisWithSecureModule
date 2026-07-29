@@ -121,7 +121,6 @@ class WSClient:
             return resp
 
     def dfir_collect_device(self, device_id: str):
-        self.log.info("[DEBUG] Entered WSClient::dfir_collect_device.")
         if re.match(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$', device_id):
             WS_API_BASE_URL = "api.connect.withsecure.com/response-actions/v1/execute/"
             WS_COLLECT_WINDOWS = {

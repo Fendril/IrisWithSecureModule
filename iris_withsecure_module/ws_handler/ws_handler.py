@@ -101,13 +101,9 @@ class WSHandler:
         and authenticated WSClient.
         :rtype: InterfaceStatus.I2
         """
-        self.log.info("[DEBUG] Entered WSHandler::dfir_collect_asset.")
-        self.log.info(f"[DEBUG] Asset: {asset}")
-        self.log.info(f"[DEBUG] Asset Info: {asset.asset_info}")
         try:
             if asset.asset_type_id in {3, 4, 9, 10}: 
                 ws_actions_id = self.withsecure.dfir_collect_device(asset.asset_info)
-                self.log.info(f"[DEBUG] WS Actions ID : {ws_actions_id}")
                 return InterfaceStatus.I2Success()
             else:
                 raise WSHandlerError(f"The asset {asset.asset_name} is not compatible with this module. Only Windows or Linux Computer/Server, are supported.")

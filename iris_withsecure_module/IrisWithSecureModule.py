@@ -75,8 +75,6 @@ class IrisWithSecureModule(IrisModuleInterface):
 
         elif hook_name == "on_manual_trigger_asset":
             for asset in data:
-                self.log.info(f"[DEBUG] TYPE : {type(asset)} -> {asset}")
-                self.log.info(f"[DEBUG] TYPE : {type(asset.asset_info)} -> {asset.asset_info}")
                 status = self._handle_dfir_collect_asset(asset)
         
         # Return a standardized message to IRIS saying that everything is ok. 
@@ -112,7 +110,6 @@ class IrisWithSecureModule(IrisModuleInterface):
         :param asset: DFIR asset data to gather.
         :type asset: Asset
         """
-        self.log.info("[DEBUG] Entered _handle_dfir_collect_asset.")
         in_status = InterfaceStatus.IIStatus(code=InterfaceStatus.I2CodeNoError)
 
         ws_handler = WSHandler.from_asset(logger=self.log, asset=asset, mod_config=self._dict_conf)
