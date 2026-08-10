@@ -1,6 +1,7 @@
 import re
 import requests
 import logging as log
+import json
 
 from urllib3.util import Retry
 
@@ -41,7 +42,7 @@ class WSClient:
         """
         datas = {
             'grant_type': 'client_credentials',
-            'scope': 'connect.api.read'
+            'scope': 'connect.api.read connect.api.write'
         }
         retry_protector = Retry(
             total=3,
@@ -125,7 +126,7 @@ class WSClient:
             WS_API_BASE_URL = "api.connect.withsecure.com/response-actions/v1/execute/"
             WS_COLLECT_WINDOWS = {
                 "fullMemoryDump" : {
-                    "winpmemersion" : "v2_1"
+                    "winpmemVersion" : "v2_1"
                 },
                 "enumerateProcesses": {},
                 "enumerateWmiPersistence": {},
@@ -183,6 +184,7 @@ class WSClient:
                                 json = payload
                             )
                             response.raise_for_status()
+                            self.log.info(f"Sent new remediation action {artifact} to EDR with status code {response.status_code}.")
                             ws_actions_id.append(response.json().get("id"))
                     elif re.match(r'(?i)^(?:Debian|Ubuntu|Alma|Amazon|Oracle|RHEL|Red\s?Hat|Rocky|SUSE)', os_name):
                         for artifact, parameters in WS_COLLECT_LINUX.items():
@@ -194,11 +196,15 @@ class WSClient:
                                 json = payload
                             )
                             response.raise_for_status()
+                            self.log.info(f"Sent new remediation action to EDR with status code {response.status_code}.")
                             ws_actions_id.append(response.json().get("id"))
                 return ws_actions_id
             except requests.exceptions.HTTPError as err:
-                self.log.error(f"HTTP Error occured : {err}")
-                raise
+                if str(err.response.status_code).startswith("4"):
+                    self.log.error(f"HTTP Error occured : {err.response.json().get('message')}")
+                else:
+                    self.log.error(f"HTTP Error occured : {err}")
+                    raise
             except Exception as err:
                 self.log.error(f"Error occured : {err}")
                 raise
