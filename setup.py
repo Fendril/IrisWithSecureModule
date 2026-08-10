@@ -4,6 +4,6 @@ import setuptools
 
 setuptools.setup(
     name='iris_withsecure_module',
-    version='1.0.3',
+    version='1.0.4',
     packages=['iris_withsecure_module', 'iris_withsecure_module.ws_handler']
 )
