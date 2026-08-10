@@ -62,8 +62,10 @@ class IrisWithSecureModule(IrisModuleInterface):
         # our parameter is set to true
         self.log.info(f'Received {hook_name}')
         if hook_name in {'on_manual_trigger_case', 'on_postload_case_create'}:
-            reg = re.compile(r"(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})")
-            cap = reg.search(data[0].description)
+            cap = re.search(
+                r"(?i)(?:ID\s*WithSecure|ID\s*WS|WS\s*ID|WithSecure\s*ID)\s*[:=]\s*([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})",
+                data[0].description
+            )
             if cap:
                 status = self._handle_bcd(cap.group(1), data[0].case_id)
                 #if status.is_failure():
