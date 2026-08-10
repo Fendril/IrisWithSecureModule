@@ -59,4 +59,8 @@ From v1.0.3 :
    - IrisWithSecureModule is using the on_postload_trigger_case is use.
    - If at case creation, into "Short Description" form a BCD ID is present, follow the requierd format, the module will add Assets and IoCs relying to.
 
+From v1.0.4 :
+   - On assets, a new dropdown menu ```WithSecure: DFIR Collects Asset``` can be used to automate remediation actions on the device if EDR is installed and enrolled.
+   - Works with Linux/Windows workstations & servers.
+
 **Note** : Actually the Module is capturing and processing one, and only one WithSecure BCD ID.

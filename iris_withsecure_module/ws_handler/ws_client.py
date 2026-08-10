@@ -172,6 +172,7 @@ class WSClient:
                     payload = {
                         "organizationId": f"{ws_json.get('company').get('id')}",
                         "targets": [f"{device_id}"],
+                        "comment": "Action requested via IrisWithSecureModule."
                     }
                     os_name = ws_json.get("os").get("name")
                     if re.match(r'^Windows', os_name):
