@@ -169,6 +169,11 @@ class WSHandler:
                                     "targetFile": activity_context["targetFile"],
                                 })
                                 binary_iocs_set.add(tuple(tmp_dict.items()))
+                            elif "loadedModule" in activity_context:
+                                tmp_dict.update({
+                                    "loadedModule": activity_context["loadedModule"],
+                                    "fileHash": activity_context["fileHash"]
+                                })
 
                     if "description" in item:
                         tmp_dict.update({"desc": item.get('description')})
@@ -249,6 +254,12 @@ class WSHandler:
                             "ioc_type_id": "111",
                             "ioc_value": f"{iocs.get('targetHash')}",
                             "ioc_description": f"TargetFile : {iocs.get('targetFile') if iocs.get('targetFile') else ''}"
+                        })
+                    elif "loadedModule" in iocs:
+                        payload.update({
+                            "ioc_type_id": "111",
+                            "ioc_value": f"{iocs.get('fileHash')}",
+                            "ioc_description": f"LoadedModule : {iocs.get('loadedModule') if iocs.get('loadedModule') else ''}"
                         })
 
                 else:
