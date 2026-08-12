@@ -178,8 +178,8 @@ class WSHandler:
                     if "description" in item:
                         tmp_dict.update({"desc": item.get('description')})
                 
-                if "deviceId" in item:
-                    assets_set.add(item["deviceId"])
+            if "deviceId" in item:
+                assets_set.add(item["deviceId"])
             
         except Exception as err:
             self.log.error(f"{err}")
