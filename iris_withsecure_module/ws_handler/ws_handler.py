@@ -233,10 +233,16 @@ class WSHandler:
                             })
                     elif "exeName" in iocs:
                         if "exeHash" in iocs:
-                            payload.update({
-                                "ioc_type_id": "111",
-                                "ioc_value": f"{iocs.get('exeHash')}",
-                            })
+                            if iocs.get('exeHash'):
+                                payload.update({
+                                    "ioc_type_id": "111",
+                                    "ioc_value": f"{iocs.get('exeHash')}",
+                                })
+                            else:
+                                payload.update({
+                                    "ioc_type_id": "37",
+                                    "ioc_value": f"{iocs.get('exeName')}",
+                                })
                         else:
                             payload.update({
                                 "ioc_type_id": "37",
@@ -323,15 +329,16 @@ class WSHandler:
                     "cid": f"{self.iris_case_id}"
                 }
                 if asset_type_id == "1":
-                    cap_username = re.match(r'^(?:\S+\\)?(\S+)$', asset)
-                    payload = {
-                        "asset_type_id": f"{asset_type_id}",
-                        "asset_compromise_status_id": "0",
-                        "analysis_status_id": "2",
-                        "asset_name": f"{cap_username.group(1)}",
-                        "asset_tags": "edr, withsecure",
-                        "asset_description": "Asset created by IrisWithSecureModule.",
-                    }
+                    cap_username = re.match(r'^(?:\S+\\)?(.+)$', asset)
+                    if cap_username:
+                        payload = {
+                            "asset_type_id": f"{asset_type_id}",
+                            "asset_compromise_status_id": "0",
+                            "analysis_status_id": "2",
+                            "asset_name": f"{cap_username.group(1)}",
+                            "asset_tags": "edr, withsecure",
+                            "asset_description": "Asset created by IrisWithSecureModule.",
+                        }
                     cap_domain = re.match('^(\S+)\\\S+$', asset)
                     if cap_domain:
                         payload.update({
